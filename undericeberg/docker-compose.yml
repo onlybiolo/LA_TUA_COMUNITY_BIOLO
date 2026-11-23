@@ -1,0 +1,38 @@
+services:
+  web:
+    build: .
+    ports: ["8080:80"]
+    volumes: ["./src:/var/www/html:z"]
+    environment:
+      DB_HOST: db
+      DB_NAME: undericeberg
+      DB_USER: ice
+      DB_PASS: ice
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: undericeberg
+      MYSQL_USER: ice
+      MYSQL_PASSWORD: ice
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - dbdata:/var/lib/mysql
+      - ./db:/docker-entrypoint-initdb.d:z
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      retries: 20
+
+  phpmyadmin:
+    image: phpmyadmin:5
+    ports: ["8081:80"]
+    environment:
+      PMA_HOST: db
+    depends_on: [db]
+
+volumes:
+  dbdata:
